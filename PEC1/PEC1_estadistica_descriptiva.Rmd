@@ -1,0 +1,274 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Sección 1. Importación, exportación y gestión de datos (2 puntos)
+
+## (1 punto) Ejercicio 1
+
+```{r}
+# Descargar el dataset
+# https://www.kaggle.com/datasets/amitvkulkarni/hair-health
+```
+
+Para ello utilizaremos el package RKaggle para descargar el dataset directamente desde R Studio
+
+```{r}
+if (!require('RKaggle')) install.packages('RKaggle')
+library('RKaggle')
+```
+
+### 1.1
+
+```{r}
+# Guardamos el dataset en formato dataframe
+HairFallH <- get_dataset('amitvkulkarni/hair-health')
+```
+
+```{r}
+# Mostramos los primeros datos con head()
+head(HairFallH, 10)
+```
+
+
+
+```{r}
+# Mostramos los últimos datos también con tail()
+tail(HairFallH, 10)
+```
+
+### 1.2
+
+Realizaremos un exploratorio genérico del dataset. Mostrando información básica del dataset, 
+para pasar luego a los estadísticos básico y comenzaremos a interactuar con las características luego.
+
+Verificamos la estructura del juego de datos principal. Vemos el número
+de columnas que tenemos y ejemplos de los contenidos de las filas.
+
+```{r}
+str(HairFallH)
+```
+
+Vemos que tenemos **13** características o variables y **999** registros.
+
+Revisamos la descripción de las variables contenidas en el fichero y si
+los tipos de variables se corresponden con las que hemos cargado. Las
+organizamos lógicamente para darles sentido y construimos un pequeño
+diccionario de datos utilizando la documentación auxiliar.
+
+-   **Id** identificador del paciente
+
+Recopilando la información desde la misma página de Kaggle tenemos:
+
+
+    Genetics: Indicates whether the individual has a family history of baldness (Yes/No).
+    Hormonal Changes: Indicates whether the individual has experienced hormonal changes (Yes/No).
+    Medical Conditions: Lists specific medical conditions that may contribute to baldness, such as Alopecia Areata, Thyroid Problems, Scalp Infection, Psoriasis, Dermatitis, etc.
+    Medications & Treatments: Lists medications and treatments that may lead to hair loss, such as Chemotherapy, Heart Medication, Antidepressants, Steroids, etc.
+    Nutritional Deficiencies: Lists nutritional deficiencies that may contribute to hair loss, such as Iron deficiency, Vitamin D deficiency, Biotin deficiency, Omega-3 fatty acid deficiency, etc.
+    Stress: Indicates the stress level of the individual (Low/Moderate/High).
+    Age: Represents the age of the individual.
+    Poor Hair Care Habits: Indicates whether the individual practices poor hair care habits (Yes/No).
+    Environmental Factors: Indicates whether the individual is exposed to environmental factors that may contribute to hair loss (Yes/No).
+    Smoking: Indicates whether the individual smokes (Yes/No).
+    Weight Loss: Indicates whether the individual has experienced significant weight loss (Yes/No).
+    Baldness (Target): Binary variable indicating the presence (1) or absence (0) of baldness in the individual.
+
+
+**HECHOS A ESTUDIAR**
+
+-   **FATAL** muertes
+-   **DRUNK_DR** conductores bebidos
+-   **VE_TOTAL** número de vehículos implicados en total
+-   **VE_FORMS** número de vehículos en movimiento implicados
+-   **PVH_INVL** número de vehículos estacionados implicados
+-   **PEDS** número de peatones implicados
+-   **PERSONS** número de ocupantes de vehículo implicados
+-   **PERMVIT** número conductores y ocupantes implicados
+-   **PERNOTMVIT** número peatones, ciclistas, a caballo... Cualquier
+    cosa menos vehículo motorizado
+
+**DIMENSIÓN GEOGRÁFICA**
+
+-   **STATE** codificación de estado
+-   **STATENAME** nombre de estado
+-   **COUNTY** identificador de contado
+-   **COUNTYNAME** condado
+-   **CITY** identificador de ciudad
+-   **CITYNAME** ciudad
+-   **NHS** 1 ha pasado a autopista del NHS 0 no
+-   **NHSNAME** TBD
+-   **ROUTE** identificador de ruta
+-   **ROUTENAME** ruta
+-   **TWAY_ID** vía de tránsito (1982)
+-   **TWAY_ID2** vía de tránsito (2004)
+-   **RUR_URB** identificador de segmento rural o urbano
+-   **RUR_URBNAME** segmento rural o urbano
+-   **FUNC_SYS** clasificación funcional segmento
+-   **FUNC_SYSNAME** TBD
+-   **RD_OWNER** identificador propietario del segmento
+-   **RD_OWNERNAME** propietario del segmento
+-   **MILEPT** milla int
+-   **MILEPTNAME** milla chr
+-   **LATITUDE** latitud int
+-   **LATITUDENAME** latitud chr
+-   **LONGITUD** longitud int
+-   **LONGITUDNAME** longitud chr
+-   **SP_JUR** código jurisdicción
+-   **SP_JURNAME** jurisdicción
+
+**DIMENSIÓN TEMPORAL**
+
+-   **DAY** día
+-   **DAYNAME** día repetido
+-   **MONTH** mes
+-   **MONTHNAME** nombre de mes
+-   **YEAR** año
+-   **DAY_WEEK** día de la semana
+-   **DAY_WEEKNAME** nombre de día de la semana
+-   **HOUR** hora
+-   **HOURNAME** franja hora
+-   **MINUTE** minuto int
+-   **MINUTENAME** minuto chr
+
+**DIMENSIÓN CONDICIONES ACCIDENTE**
+
+-   **HARM_EV** código primer acontecimiento del accidente que produzca
+    daños o lesiones
+-   **HARM_EVNAME** primer acontecimiento del accidente que produzca
+    daños o lesiones
+-   **MAN_COLL** código de posición de los vehículos
+-   **MAN_COLLNAME** posición de los vehículos
+-   **RELJCT1** código si hay área de intercambio
+-   **RELJCT1NAME** si hay área de intercambio
+-   **RELJCT2** código proximidad cruce
+-   **RELJCT2NAME** proximidad cruce
+-   **TYP_INT** código tipo de intersección
+-   **TYP_INTNAME** tipo de intersección
+-   **WRK_ZONE** código tipología de obras
+-   **WRK_ZONENAME** tipología de obras
+-   **RAIL_ROAD** código ubicación vehículo a la vía
+-   **RAIL_ROADNAME** ubicación vehículo a la vía
+-   **LGT_COND** código condición lumínica
+-   **LGT_CONDNAME** condición lumínica
+
+**DIMENSIÓN METEOROLOGIA**
+
+-   **WEATHER** código tiempo
+-   **WEATHERNAME** tiempo
+
+**OTROS**
+
+-   **SCH_BUSS** código si vehículo escolar implicado
+-   **SCH_BUSNAME** vehículo escolar implicado
+-   **RAIL** código si dentro o cerca paso ferroviario
+-   **RAILNAME** si dentro o cerca paso ferroviario
+
+**DIMENSIÓN SERVICIO EMERGENCIAS**
+
+-   **NOT_HOUR** hora notificación a emergencias int
+-   **NOT_HOURNAME** hora notificación a emergencias franja
+-   **NOT_MIN** minuto notificación a emergencias int
+-   **NOT_MINNAME** minuto notificación a emergencias chr
+-   **ARR_HOUR** hora llegada emergencias int
+-   **ARR_HOURNAME** hora llegada emergencias franja
+-   **ARR_MIN** minuto llegada emergencias int
+-   **ARR_MINNAME** minuto llegada emergencias franja
+-   **HOSP_HR** hora llegada hospital int
+-   **HOSP_HRNAME** hora llegada hospital franja
+-   **HOSP_MN** minuto llegada hospital int
+-   **HOSP_MNNAME** minuto llegada hospital franja
+
+**DIMENSIÓN FACTORES RELACIONADOS ACCIDENTE**
+
+-   **CF1** código factores relacionados con el accidente 1
+-   **CF1NAME** factores relacionados con el accidente 1
+-   **CF2** código factores relacionados con el accidente 2
+-   **CF2NAME** factores relacionados con el accidente 2
+-   **CF3** código factores relacionados con el accidente 3
+
+
+Realizamos además un pequeño resumen estadístico de cada una de las variables
+
+
+```{r}
+summary(HairFallH)
+```
+El siguiente paso será la limpieza de datos, mirando si hay valores
+vacíos o nulos.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+print('NA')
+colSums(is.na(HairFallH))
+print('Blancos')
+colSums(HairFallH=="")
+```
+
+
+Vamos a crear histogramas y describir los valores para ver los datos en
+general de estos atributos para hacer una primera aproximación a los
+datos:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+if (!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
+if(!require('Rmisc')) install.packages('Rmisc'); library('Rmisc')
+if(!require('dplyr')) install.packages('dplyr'); library('dplyr')
+if(!require('xfun')) install.packages('xfun'); library('xfun')
+
+summary(HairFallH[c("Hair Loss","Genetics")])
+
+histList<- list()
+
+n = c("Hair Loss","Genetics")
+HairFallAux= HairFallH %>% select(all_of(n))
+for(y in 1:ncol(HairFallAux)){
+col <- names(HairFallAux)[y]
+ggp <- ggplot(HairFallAux, aes_string(x = col)) +
+geom_histogram(bins = 30, fill = "cornflowerblue", color = "black",ggtittle = "Contador de ocurrencias por variable") + theme_minimal()
+histList[[y]] <- ggp # añadimos cada plot a la lista vacía
+}
+multiplot(plotlist = histList, coles = 1)
+
+```
+***
+
+## (1 punto) Ejercicio 2. Exploración del entorno RStudio y paquetes asociados.
+
+Comprobamos que tenemos el paquete `datasets` descargado y obtenemos el conjunto BOD
+
+```{r}
+if (!require('datasets')) install.packages('datasets')
+library('datasets')
+```
+
+Obtenemos el conjunto BOD y listamos el dataset
+
+```{r}
+bod <- datasets::BOD
+```
+
+
+```{r}
+summary(bod)
+```
+
+```{r}
+str(bod)
+```
+
+Observamos que tenemos solo 2 variables y 6 registros.
+
+
+```{r}
+BOD
+```
+
+```{r}
+export_bod <- save(bod)
+```
+
+# Sección 2: Análisis básico del conjunto de datos (3,5 puntos)
+
+## Ejercicio 3
+
