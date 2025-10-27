@@ -272,3 +272,80 @@ export_bod <- save(bod)
 
 ## Ejercicio 3
 
+Realizaremos un análisis exploratorio y comentaremos cada uno de los insights de las preguntas del enunciado.
+
+### 3.1
+
+Calculad la proporción de personas según el nivel de estrés, agrupadas por el
+tipo de deficiencia nutricional. Comentad los resultados.
+
+```{r}
+# Mostramos 
+```
+
+
+
+### 3.2
+Mostrad la relación entre el estrés y la caída de cabello . Mostrad un gráfico
+que compare dichas proporciones
+
+```{r}
+if(!require("corrplot")) install.packages("corrplot"); library("corrplot")
+```
+
+
+```{r}
+n = c("Hair Loss","Stress")
+factores= HairFallH %>% select(all_of(n))
+res<-cor(factores)
+corrplot(res,method="color",tl.col="black", tl.srt=30, order = "AOE",
+number.cex=0.75,sig.level = 0.01, addCoef.col = "black")
+```
+
+
+### 3.3
+Evaluad la caída de cabello con deficiencias de nutrición específicas,
+contando el número de personas por cada tipo de deficiencia nutricional.
+
+
+
+### 3.4
+Mostrad en una tabla el número de personas con caída de cabello, agrupadas
+por nivel de estrés, que sean fumadoras y cuya edad sea inferior a la media de la
+distribución
+
+### 3.5
+Mostrad las personas con edad mínima que presentan caída de cabello,
+fuman, tienen el nivel de estrés alto y tienen algún tratamiento médico asociado. ¿Qué
+deficiencia nutricional presentan?
+
+
+### 3.6
+En base a las cuestiones realizadas anteriormente, añadid una nueva cuestión
+que incluya una representación gráfica.
+
+
+
+
+
+***
+
+Sección 3: Estadística descriptiva y gráficos (4,5 puntos)
+El objetivo de este apartado trabajar los conceptos de estadística descriptiva y
+representación de gráficos. Para ello, seguiremos trabajando con el conjunto de datos de
+la sección anterior.
+(4,5 puntos) Ejercicio 4
+4.1. (0,5 puntos) A partir del conjunto de datos citado, mostrad los estadísticos descriptivos
+más relevantes y comentad los resultados, teniendo en cuenta el tipo de variables del
+conjunto de datos.
+4.2. (1 punto) Realizad un boxplot que relacione la edad con la caída de cabello, ¿qué podéis
+concluir?
+4.3. (1 punto) Realizad una tabla de frecuencias que relacione las condiciones médicas de las
+personas con el factor de caída del cabello y realizad gráfico tipo 'Mapa de calor' para
+visualizar cuales son los factores más relevantes.
+4.4. (1 punto) Representad un histograma de la edad de las personas con caída de cabello. A
+partir de aquí, y teniendo en cuenta los conceptos de normalidad trabajados al LAB1,
+representad la curva de densidad normal y evaluad la normalidad de la distribución y
+comentad los resultados.
+4.5. (1 punto) A partir del ejercicio 5 del LAB1 que trabaja con los datos Airquality del
+paquete datasets, realiza un análisis de correlación lineal sobre dos de las variables del
