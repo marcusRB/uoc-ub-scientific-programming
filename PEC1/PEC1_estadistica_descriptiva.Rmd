@@ -20,7 +20,7 @@ Se pide de descargar el dataset desde Kaggle disponible a la ruta indicada:
 # https://www.kaggle.com/datasets/amitvkulkarni/hair-health
 ```
 
-Para ello utilizaremos el package RKaggle para descargar el dataset directamente desde R Studio
+Para ello utilizaremos el paquete `RKaggle` para descargar el dataset directamente desde R Studio
 
 ```{r include=FALSE}
 if (!require('RKaggle')) install.packages('RKaggle')
@@ -30,19 +30,17 @@ library('RKaggle')
 Preparamos el entorno cargando el resto de librerías que serán útiles para realizar
 un análisis exploratorio de los datos.
 
-```{r}
-# if (!require(c("tidyverse", "ggplot2", "corrplot", "psych", "moments", "naniar", "DataExplorer")))
-install.packages(c("tidyverse","corrplot", "visdat"))
-
-if (!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
+```{r include=FALSE}
+# Observamos las librerías disponibles y descargaremos el resto
+library()
+if(!require('corrplot')) install.packages('corrplot'); library('corrplot')
+if(!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
+if(!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
 if(!require('Rmisc')) install.packages('Rmisc'); library('Rmisc')
 if(!require('dplyr')) install.packages('dplyr'); library('dplyr')
 if(!require('xfun')) install.packages('xfun'); library('xfun')
 if(!require('psych')) install.packages('psych'); library('psych')
-if(!require('reshape2')) install.packages('reshape2'); library('reshape2')
-library(tidyverse)
-library(corrplot)
-library(visdat)
+if(!require('visdat')) install.packages('visdat'); library('visdat')
 ```
 
 
@@ -56,6 +54,7 @@ Guardamos el dataset en un formato dataframe y comprobaremos
 # Guardamos el dataset en formato dataframe
 HairFallH <- get_dataset('amitvkulkarni/hair-health')
 ```
+
 
 ```{r}
 # Comprobamos si es un dataframe
@@ -154,6 +153,7 @@ colSums(is.na(HairFallH))
 También de una manera más gráfica, podemos observar si existen valores nulos.
 
 ```{r}
+# Visualizamos con el comando vis_miss del paquete visdat
 vis_miss(HairFallH, )
 ```
 Seguimos sin apreciar los datos nulos o vacíos. Por lo general nos tocará realizar 
@@ -287,6 +287,10 @@ Realizaremos un análisis exploratorio más detallado y comentaremos cada uno de
 *Calculad la proporción de personas según el nivel de estrés, agrupadas por el
 tipo de deficiencia nutricional. Comentad los resultados.*
 
+Utilizaremos ggplot para poder mostrar los datos en barras verticales por cada
+una de las 3 categorías de la variable `Stress` indicando por colores rojos HIGH,
+verde LOW, azule MODERATE
+
 ```{r}
 # Mostramos los resultados de esta proporción
 stress_prop <- HairFallH %>%
@@ -302,11 +306,23 @@ ggplot(stress_prop, aes(x = `Nutritional Deficiencies`, y = prop, fill = Stress)
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+Podemos apreciar como los valores de `Selenium deficiency` se encuentra en una 
+proporción del 40% más altarespecto a la `Vitamin D Deficiency`. Por lo que la correlación
+entre estas dos variables pueda tener su importancia. Los valores de stress HIGH
+mayor se encuentra con `Protein deficiency` y `Vitamin E deficiency` en un casi 35-38%.
+El valor bajo LOW de stress está por `Biotin` y `Omega 3`. Sería oportuno realizar
+unos cálculos más exhaustivos para poder correlacionar las dos variables y poder
+extraer unas conclusiones más detalladas.
+
+
 ***
 
 ### 3.2
 *Mostrad la relación entre el estrés y la caída de cabello . Mostrad un gráfico
 que compare dichas proporciones*
+
+Utilizamos siempre el paquete `ggplot2` para poder graficar y visualizar la relación
+que hay entre estrés y la caída de cabello.
 
 ```{r}
 stress_hairloss <- HairFallH %>%
@@ -323,14 +339,14 @@ ggplot(stress_hairloss, aes(x = Stress, y = prop, fill = factor(`Hair Loss`))) +
   scale_fill_manual(values = c("#828282", "#8B3A3A"), labels = c("No", "Sí"))
 ```
 
+Aunque los tres niveles de estrés puedan tener la misma proporción de pérdida
+de cabello, un nivel moderado tiene una mayor proporción respecto al resto.
+Asimismo la caída de cabello no influye por un nivel estrés alto ni bajo.
 
-```{r}
-n = c("Hair Loss","Stress")
-factores= HairFallH %>% select(all_of(n))
-res<-cor(factores)
-corrplot(res,method="color",tl.col="black", tl.srt=30, order = "AOE",
-number.cex=0.75,sig.level = 0.01, addCoef.col = "black")
-```
+Al igual que ejercicio anterior, son conclusiones a simple vista de un gráfico.
+Con unos cálculos estadístico de correlación, quizás podríamos ver más detalles
+que con la gráfica podría ocultar.
+
 
 ***
 
@@ -341,17 +357,21 @@ contando el número de personas por cada tipo de deficiencia nutricional.*
 
 
 ```{r}
-nutri_hairloss <- HairFallH %>%
-  filter(`Hair Loss` == 1) %>%
-  count(`Nutritional Deficiencies`, sort = TRUE)
-
-ggplot(nutri_hairloss, aes(x = reorder(`Nutritional Deficiencies`, n), y = n, fill = `Nutritional Deficiencies`)) +
+ggplot(nutri_hairloss, aes(x = reorder(`Nutritional Deficiencies`, n), y = n, fill = n)) +
   geom_bar(stat = "identity") +
   coord_flip() +
+  scale_fill_gradient(low = "#87CEEB", high = "#36648B") +
   labs(title = "Número de personas con caída de cabello por deficiencia nutricional",
        x = "Deficiencia nutricional", y = "Número de personas") +
+  theme_minimal() +
   theme(legend.position = "none")
 ```
+
+Este gráfico de barras horizontales nos muestra el número de personas que por 
+deficiencia nutricional sí tienen caída de pelo, en valores absolutos.
+Podemos apreciar que en orden tenemos la carencia de `Vitamina D`, `Zinc`, `Vitamin A`
+`Protein`, `Magnesium`, `Biotin`, valores por encima de los 45. El resto se
+encontrarían por debajo de este valor.
 
 
 ***
@@ -362,7 +382,7 @@ ggplot(nutri_hairloss, aes(x = reorder(`Nutritional Deficiencies`, n), y = n, fi
 por nivel de estrés, que sean fumadoras y cuya edad sea inferior a la media de la
 distribución*
 
-Podemos realizar la tarea por parte. Primero analizamos la media de la distrubición
+Podemos realizar la tarea por parte. Primero analizamos la media de la distribución
 
 ```{r}
 # Calcular media distribución
@@ -383,13 +403,13 @@ tabla <- HairFallH %>%
 ```
 
 ```{r}
+# La tabla mostraría este resultado.
 tabla
 ```
 
-
-```{r}
-# Mostramos gráficamente con barras
-```
+Teniendo en cuenta la media de 34, aquellas personas que se encuentran por debajo
+del promedio, con un nivel de estrés alto tenemos 37 personas; nivel bajo 38 y
+un nivel moderado 56 personas.
 
 
 ***
@@ -399,11 +419,12 @@ tabla
 fuman, tienen el nivel de estrés alto y tienen algún tratamiento médico asociado. ¿Qué
 deficiencia nutricional presentan?*
 
+Primero calcularemos la edad mínima, y aplicaríamos los filtros.
 
 ```{r}
 min_age <- min(HairFallH$Age[HairFallH$`Hair Loss` == 1], na.rm = TRUE)
 
-subset_3_5 <- HairFallH %>%
+tabla_filtrada <- HairFallH %>%
   filter(Age == min_age,
          `Hair Loss` == 1,
          Smoking == "Yes",
@@ -412,8 +433,11 @@ subset_3_5 <- HairFallH %>%
   select(Id, Age, `Nutritional Deficiencies`, `Medications & Treatments`)
 
 
-subset_3_5
+tabla_filtrada
 ```
+
+Mostramos la tabla con la edad mínima de 18 años, en particular 3 individuos con 
+las respectivas deficiencias nutricional y que están siendo tratados.
 
 
 ***
@@ -422,20 +446,31 @@ subset_3_5
 *En base a las cuestiones realizadas anteriormente, añadid una nueva cuestión
 que incluya una representación gráfica.*
 
+Aplicamos una nueva cuestión de caída de cabello por condición médica y cambios
+hormonales. Queremos ver si hay ciertas correlaciones según estos dos factores.
+
 ```{r}
 combo_hairloss <- HairFallH %>%
-  group_by(`Nutritional Deficiencies`, Stress) %>%
+  group_by(`Medical Conditions`, `Hormonal Changes`) %>%
   summarise(Mean_Hair_Loss = mean(`Hair Loss`), .groups = "drop")
 
-ggplot(combo_hairloss, aes(x = Stress, y = Mean_Hair_Loss, fill = Stress)) +
+ggplot(combo_hairloss, aes(x = `Hormonal Changes`, y = Mean_Hair_Loss, fill = `Hormonal Changes`)) +
   geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~`Nutritional Deficiencies`) +
-  labs(title = "Caída de cabello promedio por deficiencia nutricional y nivel de estrés",
-       x = "Nivel de estrés", y = "Proporción con caída de cabello") +
+  facet_wrap(~`Medical Conditions`) +
+  scale_fill_manual(values = c("Yes" = "#8B475D", "No" = "grey70")) +
+  labs(title = "Caída de cabello promedio por condición médica y cambios hormonales",
+       x = "Cambios hormonales", y = "Proporción con caída de cabello",
+       fill = "Cambios hormonales") +
+  theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
+A simple vista, un cambio hormonal NO afecta en los casos de "Alopecia Areata",
+"Dermatitis", "Eczema", "Ringworm", "Scalp Infection". Sin embargo, sí vemos que
+un cambio hormonal afecta a los síntomas de "Androgenetic Alopecia", "Dermatosis"
+"Seborrheic Dermatisis" y "Psioriasis" más que al resto. Se podría estudiar más
+el caso y cada síntoma para poder ver su causa-efecto para poder dar una respuesta
+correcta a los gráficos actuales.
 
 
 
@@ -488,31 +523,25 @@ cat_summary
 *Realizad un boxplot que relacione la edad con la caída de cabello, ¿qué podéis
 concluir?*
 
+Mostramos el gráfico de esta relación con un boxplot a través del paquete ggplot2.
 
 ```{r}
-ggplot(HairFallH, aes(x = factor(`Hair Loss`, labels = c("Sí", "No")), y = Age, fill = factor(`Hair Loss`))) +
+ggplot(HairFallH, aes(x = factor(`Hair Loss`, labels = c("No", "Sí")), 
+                      y = Age, 
+                      fill = factor(`Hair Loss`))) +
   geom_boxplot() +
+  scale_fill_manual(values = c("0" = "grey70", "1" = "#8B475D")) +
   labs(title = "Relación entre la edad y la caída de cabello",
-       x = "Caída de cabello", y = "Edad") +
+       x = "Caída de cabello", y = "Edad",
+       fill = "Caída de cabello") +
   theme_minimal()
-
 ```
 A simple vista, no parece ser un factor ni tener correlación que la edad pueda influir del todo en la pérdida del cabello. Se puede apreciar que la mediana, así como el mínimo y el máximo son valores con diferencia poco significativa. De hecho, necesitaríamos tener en cuenta otras características, como stress, factores ambientales, o hormonal y genética. Sin embargo, podemos ver también que el dataset incluye solo una muestra de 999 individuos de 18 a 50, equilibrando los casos positivos y negativo de pérdida de pelo en una muestra homogénea, quizás para estudiar otros factores y no tener el sesgo por edad.
 
 ```{r}
+# Mostramos efectivamente la distribución de esta característica
 summary(HairFallH$'Age')
 ```
-
-
-```{r}
-ggplot(HairFallH, aes(x = factor(`Hair Loss`, labels = c("No", "Sí")), y = Age, fill = factor(`Hair Loss`))) +
-  geom_boxplot() +
-  labs(title = "Relación entre la edad y la caída de cabello",
-       x = "Caída de cabello", y = "Edad") +
-  theme_minimal()
-```
-
-
 
 
 ***
@@ -524,26 +553,45 @@ personas con el factor de caída del cabello y realizad gráfico tipo 'Mapa de c
 visualizar cuales son los factores más relevantes.*
 
 ```{r}
-# Tabla de frecuencias
+# Se crea la tabla de frecuencias
 tabla_medical <- HairFallH %>%
   group_by(`Medical Conditions`, `Hair Loss`) %>%
   summarise(count = n(), .groups = "drop") %>%
   pivot_wider(names_from = `Hair Loss`, values_from = count, values_fill = 0)
 
-# Convertir a formato largo para el heatmap
+# Ordenamos por mayor número de "Sí" (Hair Loss = 1) para tener una mejor visualización
+tabla_medical <- tabla_medical %>%
+  arrange(desc(`1`))
+
+# Convertimos a formato largo para el heatmap
 heat_data <- tabla_medical %>%
   melt(id.vars = "Medical Conditions", variable.name = "Hair_Loss", value.name = "count")
 
-ggplot(heat_data, aes(x = `Hair_Loss`, y = `Medical Conditions`, fill = count)) +
-  geom_tile() +
-  geom_text(aes(label = count), color = "white") +
-  scale_fill_gradient(low = "#74add1", high = "#d73027") +
-  labs(title = "Mapa de calor: condiciones médicas y caída de cabello",
-       x = "Caída de cabello (0=No, 1=Sí)", y = "Condición médica") +
-  theme_minimal()
+# Vamos a ordenar los factores para que aparezcan de mayor a menor
+heat_data$`Medical Conditions` <- factor(heat_data$`Medical Conditions`,
+                                         levels = tabla_medical$`Medical Conditions`)
+
+# Creamos las etiquetas legibles para el eje x
+heat_data$Hair_Loss <- factor(heat_data$Hair_Loss,
+                              levels = c("1", "0"),
+                              labels = c("Sí pérdida", "No pérdida"))
+
+# Creamos el gráfico con ggplot
+ggplot(heat_data, aes(x = Hair_Loss, y = `Medical Conditions`, fill = count)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = count), color = "white", size = 3.5) +
+  scale_fill_gradient(low = "#74add1", high = "#d73027") +  # azul→rojo
+  labs(title = "Mapa de calor: condiciones médicas y pérdida de cabello",
+       x = "Caída de cabello", y = "Condición médica",
+       fill = "Número de casos") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
-
+Quitando los valores de No Data, donde tenemos un conteo de 63 individuos, vemos
+que la "Alopecia Areata" y "Androgenetic Alopecia" inciden bastante , seguido por 
+"Seborrheic Dermatisis" y "Psioriasis" . Seguramente afectarán la pérdida de 
+cabello más que otros síntomas. Mientras que la no caída de cabello no está afectada
+por ejemplo con problemas de "Thyroid", más que el resto y un 50% con "Psioriasis".
 ***
 
 ### 4.4. (1 punto) 
@@ -552,6 +600,11 @@ ggplot(heat_data, aes(x = `Hair_Loss`, y = `Medical Conditions`, fill = count)) 
 partir de aquí, y teniendo en cuenta los conceptos de normalidad trabajados al LAB1,
 representad la curva de densidad normal y evaluad la normalidad de la distribución y
 comentad los resultados.*
+
+Mostramos un gráfico donde mostraremos la distribución, tiene que mostrar una 
+forma de campana más hacía el centro donde viene representada la mediana y la moda.
+Finalmente vemos la densidad normal.
+
 
 ```{r warning=FALSE}
 ggplot(HairFallH %>% filter(`Hair Loss` == 1), aes(x = Age)) +
@@ -567,6 +620,13 @@ ggplot(HairFallH %>% filter(`Hair Loss` == 1), aes(x = Age)) +
 
 ```
 
+A primera vista tenemos la densidad más hacía el promedio, estamos entorno a 30 años y 
+la mediana toca justo a los 34. Tenemos valores de frecuencia más altos en un primer
+rango entre 20-25, un segundo entre 30-35, otro casi a los 40-45
+
+Parece indicar que la muestra está bien repartida de forma homogénea para que
+se puedan tomar en cuenta los valores y no tener sesgos.
+
 
 ***
 
@@ -581,24 +641,28 @@ conjunto de datos y realiza la representación gráfica que más se ajuste.*
 ```{r}
 data("airquality")
 
-# Seleccionar variables numéricas relevantes
+# Creamos y seleccionaremos las variables numéricas relevantes
 cor_data <- airquality %>%
   select(Ozone, Temp, Wind, Solar.R) %>%
   drop_na()
 
-# Calcular correlación
+# Creamos una matriz de correlación
 cor_matrix <- cor(cor_data)
-
-# Mostrar matriz de correlaciones
 round(cor_matrix, 2)
 
-# Representación gráfica
+# Mostramos gráficamente
 corrplot(cor_matrix, method = "color", type = "upper",
          addCoef.col = "#828282", tl.col = "black",
          title = "Correlación entre variables del dataset Airquality",
          mar = c(0,0,2,0))
 
 ```
-
+Observamos que en la diagonal tenemos los valores 1, entre sus propias características.
+Pero las que nos importan son `Temp`y `Ozone` tienen una correlación fuerta positiva
+de 0,70 mientras por el opuesto, `Wind` y `Ozone` tiene una correlación casi fuerte
+negativa de -0,61. Esto significa que si crece el nivel de ozono la temperatura
+se eleva, es directamente proporcional. Mientras que si hay viento, no es porque
+hay más ozono o menos, es indirectamente proporcional. Por este motivo al crecer
+unos valores de una característica, baja el otro y viceversa.
 
 
