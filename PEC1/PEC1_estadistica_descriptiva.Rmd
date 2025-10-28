@@ -1,11 +1,19 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: 'PEC1: Estadística descriptiva '
+author: "marcusRB"
+date: "October, 2025"
+output: pdf_document
+header-includes:
+- \usepackage{xcolor}
+- \usepackage{framed}
+- \usepackage{listings}
+
 ---
 
 # Sección 1. Importación, exportación y gestión de datos (2 puntos)
 
 ## (1 punto) Ejercicio 1
+Se pide de descargar el dataset desde Kaggle disponible a la ruta indicada:
 
 ```{r}
 # Descargar el dataset
@@ -14,17 +22,46 @@ output: html_notebook
 
 Para ello utilizaremos el package RKaggle para descargar el dataset directamente desde R Studio
 
-```{r}
+```{r include=FALSE}
 if (!require('RKaggle')) install.packages('RKaggle')
 library('RKaggle')
 ```
 
+Preparamos el entorno cargando el resto de librerías que serán útiles para realizar
+un análisis exploratorio de los datos.
+
+```{r}
+# if (!require(c("tidyverse", "ggplot2", "corrplot", "psych", "moments", "naniar", "DataExplorer")))
+install.packages(c("tidyverse","corrplot", "visdat"))
+
+if (!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
+if(!require('Rmisc')) install.packages('Rmisc'); library('Rmisc')
+if(!require('dplyr')) install.packages('dplyr'); library('dplyr')
+if(!require('xfun')) install.packages('xfun'); library('xfun')
+
+library(tidyverse)
+library(corrplot)
+library(visdat)
+```
+
+
+***
+
 ### 1.1
+
+Guardamos el dataset en un formato dataframe y comprobaremos
 
 ```{r}
 # Guardamos el dataset en formato dataframe
 HairFallH <- get_dataset('amitvkulkarni/hair-health')
 ```
+
+```{r}
+# Comprobamos si es un dataframe
+is.data.frame(HairFallH)
+```
+
+Finalmente mostramos los primeros datos y la naturaleza de las características.
 
 ```{r}
 # Mostramos los primeros datos con head()
@@ -38,199 +75,125 @@ head(HairFallH, 10)
 tail(HairFallH, 10)
 ```
 
+***
+
 ### 1.2
 
-Realizaremos un exploratorio genérico del dataset. Mostrando información básica del dataset, 
-para pasar luego a los estadísticos básico y comenzaremos a interactuar con las características luego.
+Realizaremos un exploratorio genérico del dataset. Mostrando información básica del dataset, para pasar luego a los estadísticos básico y comenzaremos a interactuar con las características luego.
 
-Verificamos la estructura del juego de datos principal. Vemos el número
-de columnas que tenemos y ejemplos de los contenidos de las filas.
+Verificamos la estructura del juego de datos principal. Vemos el número de columnas que tenemos y ejemplos de los contenidos de las filas.
 
 ```{r}
 str(HairFallH)
 ```
 
-Vemos que tenemos **13** características o variables y **999** registros.
+```{r}
+# Observamos su composición
+dim(HairFallH)
+```
 
-Revisamos la descripción de las variables contenidas en el fichero y si
+Vemos que tenemos **13** características o variables y **999** registros.
+De las características observamos que solamente existen 3 variables numéricas del
+tipo double, y el resto, 10 variables del tipo objeto o character.
+
+A simple vista las que podrían ser variables categoróricas, en realidad son 
+características binarias (TRUE o FALSE), como podríamos interpolar por 1,0 si 
+deseamos.
+
+Podemos revisar la descripción de las variables contenidas en el fichero y si
 los tipos de variables se corresponden con las que hemos cargado. Las
 organizamos lógicamente para darles sentido y construimos un pequeño
 diccionario de datos utilizando la documentación auxiliar.
 
--   **Id** identificador del paciente
-
-Recopilando la información desde la misma página de Kaggle tenemos:
-
-
-    Genetics: Indicates whether the individual has a family history of baldness (Yes/No).
-    Hormonal Changes: Indicates whether the individual has experienced hormonal changes (Yes/No).
-    Medical Conditions: Lists specific medical conditions that may contribute to baldness, such as Alopecia Areata, Thyroid Problems, Scalp Infection, Psoriasis, Dermatitis, etc.
-    Medications & Treatments: Lists medications and treatments that may lead to hair loss, such as Chemotherapy, Heart Medication, Antidepressants, Steroids, etc.
-    Nutritional Deficiencies: Lists nutritional deficiencies that may contribute to hair loss, such as Iron deficiency, Vitamin D deficiency, Biotin deficiency, Omega-3 fatty acid deficiency, etc.
-    Stress: Indicates the stress level of the individual (Low/Moderate/High).
-    Age: Represents the age of the individual.
-    Poor Hair Care Habits: Indicates whether the individual practices poor hair care habits (Yes/No).
-    Environmental Factors: Indicates whether the individual is exposed to environmental factors that may contribute to hair loss (Yes/No).
-    Smoking: Indicates whether the individual smokes (Yes/No).
-    Weight Loss: Indicates whether the individual has experienced significant weight loss (Yes/No).
-    Baldness (Target): Binary variable indicating the presence (1) or absence (0) of baldness in the individual.
+```{r}
+# Extraemos los nombres de las variables
+names(HairFallH)
+```
 
 
-**HECHOS A ESTUDIAR**
+- **Genetics** : Indicates whether the individual has a family history of baldness (Yes/No).
+- **Hormonal Changes**: Indicates whether the individual has experienced hormonal changes (Yes/No).
+- **Medical Conditions**: Lists specific medical conditions that may contribute to baldness, such as Alopecia Areata, Thyroid Problems, Scalp Infection, Psoriasis, Dermatitis, etc.
+- **Medications & Treatments**: Lists medications and treatments that may lead to hair loss, such as Chemotherapy, Heart Medication, Antidepressants, Steroids, etc.
+- **Nutritional Deficiencies**: Lists nutritional deficiencies that may contribute to hair loss, such as Iron deficiency, Vitamin D deficiency, Biotin deficiency, Omega-3 fatty acid deficiency, etc.
+- **Stress**: Indicates the stress level of the individual (Low/Moderate/High).
+- **Age**: Represents the age of the individual.
+- **Poor Hair Care Habits**: Indicates whether the individual practices poor hair care habits (Yes/No).
+- **Environmental Factors**: Indicates whether the individual is exposed to environmental factors that may contribute to hair loss (Yes/No).
+- **Smoking**: Indicates whether the individual smokes (Yes/No).
+- **Weight Loss**: Indicates whether the individual has experienced significant weight loss (Yes/No).
+- **Baldness (Target)**: Binary variable indicating the presence (1) or absence (0) of baldness in the individual.
 
--   **FATAL** muertes
--   **DRUNK_DR** conductores bebidos
--   **VE_TOTAL** número de vehículos implicados en total
--   **VE_FORMS** número de vehículos en movimiento implicados
--   **PVH_INVL** número de vehículos estacionados implicados
--   **PEDS** número de peatones implicados
--   **PERSONS** número de ocupantes de vehículo implicados
--   **PERMVIT** número conductores y ocupantes implicados
--   **PERNOTMVIT** número peatones, ciclistas, a caballo... Cualquier
-    cosa menos vehículo motorizado
-
-**DIMENSIÓN GEOGRÁFICA**
-
--   **STATE** codificación de estado
--   **STATENAME** nombre de estado
--   **COUNTY** identificador de contado
--   **COUNTYNAME** condado
--   **CITY** identificador de ciudad
--   **CITYNAME** ciudad
--   **NHS** 1 ha pasado a autopista del NHS 0 no
--   **NHSNAME** TBD
--   **ROUTE** identificador de ruta
--   **ROUTENAME** ruta
--   **TWAY_ID** vía de tránsito (1982)
--   **TWAY_ID2** vía de tránsito (2004)
--   **RUR_URB** identificador de segmento rural o urbano
--   **RUR_URBNAME** segmento rural o urbano
--   **FUNC_SYS** clasificación funcional segmento
--   **FUNC_SYSNAME** TBD
--   **RD_OWNER** identificador propietario del segmento
--   **RD_OWNERNAME** propietario del segmento
--   **MILEPT** milla int
--   **MILEPTNAME** milla chr
--   **LATITUDE** latitud int
--   **LATITUDENAME** latitud chr
--   **LONGITUD** longitud int
--   **LONGITUDNAME** longitud chr
--   **SP_JUR** código jurisdicción
--   **SP_JURNAME** jurisdicción
-
-**DIMENSIÓN TEMPORAL**
-
--   **DAY** día
--   **DAYNAME** día repetido
--   **MONTH** mes
--   **MONTHNAME** nombre de mes
--   **YEAR** año
--   **DAY_WEEK** día de la semana
--   **DAY_WEEKNAME** nombre de día de la semana
--   **HOUR** hora
--   **HOURNAME** franja hora
--   **MINUTE** minuto int
--   **MINUTENAME** minuto chr
-
-**DIMENSIÓN CONDICIONES ACCIDENTE**
-
--   **HARM_EV** código primer acontecimiento del accidente que produzca
-    daños o lesiones
--   **HARM_EVNAME** primer acontecimiento del accidente que produzca
-    daños o lesiones
--   **MAN_COLL** código de posición de los vehículos
--   **MAN_COLLNAME** posición de los vehículos
--   **RELJCT1** código si hay área de intercambio
--   **RELJCT1NAME** si hay área de intercambio
--   **RELJCT2** código proximidad cruce
--   **RELJCT2NAME** proximidad cruce
--   **TYP_INT** código tipo de intersección
--   **TYP_INTNAME** tipo de intersección
--   **WRK_ZONE** código tipología de obras
--   **WRK_ZONENAME** tipología de obras
--   **RAIL_ROAD** código ubicación vehículo a la vía
--   **RAIL_ROADNAME** ubicación vehículo a la vía
--   **LGT_COND** código condición lumínica
--   **LGT_CONDNAME** condición lumínica
-
-**DIMENSIÓN METEOROLOGIA**
-
--   **WEATHER** código tiempo
--   **WEATHERNAME** tiempo
-
-**OTROS**
-
--   **SCH_BUSS** código si vehículo escolar implicado
--   **SCH_BUSNAME** vehículo escolar implicado
--   **RAIL** código si dentro o cerca paso ferroviario
--   **RAILNAME** si dentro o cerca paso ferroviario
-
-**DIMENSIÓN SERVICIO EMERGENCIAS**
-
--   **NOT_HOUR** hora notificación a emergencias int
--   **NOT_HOURNAME** hora notificación a emergencias franja
--   **NOT_MIN** minuto notificación a emergencias int
--   **NOT_MINNAME** minuto notificación a emergencias chr
--   **ARR_HOUR** hora llegada emergencias int
--   **ARR_HOURNAME** hora llegada emergencias franja
--   **ARR_MIN** minuto llegada emergencias int
--   **ARR_MINNAME** minuto llegada emergencias franja
--   **HOSP_HR** hora llegada hospital int
--   **HOSP_HRNAME** hora llegada hospital franja
--   **HOSP_MN** minuto llegada hospital int
--   **HOSP_MNNAME** minuto llegada hospital franja
-
-**DIMENSIÓN FACTORES RELACIONADOS ACCIDENTE**
-
--   **CF1** código factores relacionados con el accidente 1
--   **CF1NAME** factores relacionados con el accidente 1
--   **CF2** código factores relacionados con el accidente 2
--   **CF2NAME** factores relacionados con el accidente 2
--   **CF3** código factores relacionados con el accidente 3
+Esta última variable, la variable predictora siendo binaria [0,1], nos indica que está renombrada como `Hair Loss`. 
 
 
 Realizamos además un pequeño resumen estadístico de cada una de las variables
 
 
 ```{r}
+# Con esta función observamos la distribución de los datos a grande rasgos.
 summary(HairFallH)
 ```
-El siguiente paso será la limpieza de datos, mirando si hay valores
-vacíos o nulos.
+El siguiente paso será observar si necesitaremos tratar los datos con la tareas de limpieza o imputaciones de los valores,  por ejemplo,  nulos o vacíos
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 print('NA')
 colSums(is.na(HairFallH))
 print('Blancos')
+print('Empty')
+print('NAN')
 colSums(HairFallH=="")
 ```
 
+```{r}
+# Verificamos más en detalle los valores na
+sum(is.na(HairFallH))
+colSums(is.na(HairFallH))
+```
+También de una manera más gráfica, podemos observar si existen valores nulos.
+
+```{r}
+vis_miss(HairFallH, )
+```
+Seguimos sin apreciar los datos nulos o vacíos. Por lo general nos tocará realizar 
+un exploratorio más exhaustivo para observar la distribución de los datos, y, en
+su caso ver si los datos de las variables categóricos, estén ocultos.
 
 Vamos a crear histogramas y describir los valores para ver los datos en
 general de estos atributos para hacer una primera aproximación a los
 datos:
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
-if (!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
-if(!require('Rmisc')) install.packages('Rmisc'); library('Rmisc')
-if(!require('dplyr')) install.packages('dplyr'); library('dplyr')
-if(!require('xfun')) install.packages('xfun'); library('xfun')
-
 summary(HairFallH[c("Hair Loss","Genetics")])
 
 histList<- list()
 
-n = c("Hair Loss","Genetics")
-HairFallAux= HairFallH %>% select(all_of(n))
+n = c("Hair Loss", "Genetics")
+HairFallAux = HairFallH %>% select(all_of(n))
+histList <- list()
+
 for(y in 1:ncol(HairFallAux)){
-col <- names(HairFallAux)[y]
-ggp <- ggplot(HairFallAux, aes_string(x = col)) +
-geom_histogram(bins = 30, fill = "cornflowerblue", color = "black",ggtittle = "Contador de ocurrencias por variable") + theme_minimal()
-histList[[y]] <- ggp # añadimos cada plot a la lista vacía
+  col <- names(HairFallAux)[y]
+  
+  # Use backticks for column names with spaces
+  ggp <- ggplot(HairFallAux, aes(x = .data[[col]])) +
+    geom_histogram(bins = 30, fill = "cornflowerblue", color = "black") + 
+    ggtitle(paste("Distribution of", col)) +  # More descriptive title
+    xlab(col) +
+    ylab("Count") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+  
+  histList[[y]] <- ggp
 }
-multiplot(plotlist = histList, coles = 1)
+
+# Display all plots in a grid
+if(length(histList) > 0) {
+  do.call(grid.arrange, c(histList, ncol = 2))
+}
 
 ```
+
 ***
 
 ## (1 punto) Ejercicio 2. Exploración del entorno RStudio y paquetes asociados.
@@ -257,40 +220,106 @@ summary(bod)
 str(bod)
 ```
 
-Observamos que tenemos solo 2 variables y 6 registros.
+Observamos que tenemos solo *2 variable* del tipo númerico s y *6 registros*.
 
 
 ```{r}
+# Veámos su composición
 BOD
 ```
 
 ```{r}
-export_bod <- save(bod)
+# Buscamndo la información oficial
+help(BOD)
 ```
+
+Efectivamente desde el dataset `BOD` oficial, segúna la descripción de este 
+dataset incluido con el paquete en R `datasets::BOD` nos indica:
+
+> The BOD data frame has 6 rows and 2 columns giving the biochemical oxygen demand versus time in an evaluation of water quality.
+
+Las dos variables nos dan información de:
+
+> Time
+A numeric vector giving the time of the measurement (days).
+  demand
+A numeric vector giving the biochemical oxygen demand (mg/l).
+
+Seguramente es un dataset resultado de una prueba de concepto que está disponible
+y referenciado:
+
+**Source**
+Bates, D.M. and Watts, D.G. (1988), *Nonlinear Regression Analysis and Its Applications*, Wiley, Appendix A1.4.
+
+Originally from Marske (1967), *Biochemical Oxygen Demand Data Interpretation Using Sum of Squares Surface M.Sc. Thesis*, University of Wisconsin – Madison.
+
+***
+
+### 2.2
+
+Ahora podemos guardar el dataframe resultante a un formato csv a nuestra carpeta
+`working directory` de nuestro ordenador.
+
+```{r}
+# Podemos guardar este dataset directamente a nuestro entorno con el comando write_csv
+export_bod <- write_csv(bod, "bod.csv")
+```
+
+Podemos comprobar como el fichero ha sido guardado correctamente
+
+```{r}
+WD <- getwd()
+list.files(WD)
+```
+
+
+***
 
 # Sección 2: Análisis básico del conjunto de datos (3,5 puntos)
 
 ## Ejercicio 3
 
-Realizaremos un análisis exploratorio y comentaremos cada uno de los insights de las preguntas del enunciado.
+Realizaremos un análisis exploratorio más detallado y comentaremos cada uno de los insights de las preguntas del enunciado.
 
 ### 3.1
 
-Calculad la proporción de personas según el nivel de estrés, agrupadas por el
-tipo de deficiencia nutricional. Comentad los resultados.
+*Calculad la proporción de personas según el nivel de estrés, agrupadas por el
+tipo de deficiencia nutricional. Comentad los resultados.*
 
 ```{r}
-# Mostramos 
+# Mostramos los resultados de esta proporción
+stress_prop <- HairFallH %>%
+  group_by(`Nutritional Deficiencies`, Stress) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(`Nutritional Deficiencies`) %>%
+  mutate(prop = count / sum(count))
+
+ggplot(stress_prop, aes(x = `Nutritional Deficiencies`, y = prop, fill = Stress)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Proporción de niveles de estrés según deficiencia nutricional",
+       x = "Deficiencia nutricional", y = "Proporción") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
+***
 
 ### 3.2
-Mostrad la relación entre el estrés y la caída de cabello . Mostrad un gráfico
-que compare dichas proporciones
+*Mostrad la relación entre el estrés y la caída de cabello . Mostrad un gráfico
+que compare dichas proporciones*
 
 ```{r}
-if(!require("corrplot")) install.packages("corrplot"); library("corrplot")
+stress_hairloss <- HairFallH %>%
+  group_by(Stress, Hair_Loss = Hair_Loss) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(Stress) %>%
+  mutate(prop = count / sum(count))
+
+ggplot(stress_hairloss, aes(x = Stress, y = prop, fill = factor(Hair_Loss))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Relación entre nivel de estrés y caída de cabello",
+       x = "Nivel de estrés", y = "Proporción",
+       fill = "Caída de cabello") +
+  scale_fill_manual(values = c("#6c757d", "#e63946"), labels = c("No", "Sí"))
 ```
 
 
@@ -302,27 +331,80 @@ corrplot(res,method="color",tl.col="black", tl.srt=30, order = "AOE",
 number.cex=0.75,sig.level = 0.01, addCoef.col = "black")
 ```
 
+***
 
 ### 3.3
-Evaluad la caída de cabello con deficiencias de nutrición específicas,
-contando el número de personas por cada tipo de deficiencia nutricional.
+
+*Evaluad la caída de cabello con deficiencias de nutrición específicas,
+contando el número de personas por cada tipo de deficiencia nutricional.*
 
 
+```{r}
+nutri_hairloss <- HairFallH %>%
+  filter(`Hair Loss` == 1) %>%
+  count(`Nutritional Deficiencies`, sort = TRUE)
+
+ggplot(nutri_hairloss, aes(x = reorder(`Nutritional Deficiencies`, n), y = n, fill = `Nutritional Deficiencies`)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Número de personas con caída de cabello por deficiencia nutricional",
+       x = "Deficiencia nutricional", y = "Número de personas") +
+  theme(legend.position = "none")
+```
+
+
+***
 
 ### 3.4
-Mostrad en una tabla el número de personas con caída de cabello, agrupadas
+
+*Mostrad en una tabla el número de personas con caída de cabello, agrupadas
 por nivel de estrés, que sean fumadoras y cuya edad sea inferior a la media de la
-distribución
+distribución*
+
+Podemos realizar la tarea por parte. Primero analizamos la media de la distrubición
+
+```{r}
+# Calcular media distribución
+mean_age <- mean(HairFallH$Age, na.rm = TRUE)
+mean_age
+```
+
+Entonces tenemos que realizar el filtro de aquellas personas solo con caída de cabello,
+agrupamos por estrés YES, fumadoras YES y la edad es menor que 34.19
+
+```{r}
+tabla <- HairFallH %>%
+  filter(`Hair Loss` == 1,
+         Smoking == "Yes",
+         Age < mean_age) %>%
+  group_by(Stress) %>%
+  summarise(count = n(), .groups = "drop")
+```
+
+
+***
 
 ### 3.5
-Mostrad las personas con edad mínima que presentan caída de cabello,
+*Mostrad las personas con edad mínima que presentan caída de cabello,
 fuman, tienen el nivel de estrés alto y tienen algún tratamiento médico asociado. ¿Qué
-deficiencia nutricional presentan?
+deficiencia nutricional presentan?*
 
+
+```{r}
+
+```
+
+
+***
 
 ### 3.6
-En base a las cuestiones realizadas anteriormente, añadid una nueva cuestión
-que incluya una representación gráfica.
+*En base a las cuestiones realizadas anteriormente, añadid una nueva cuestión
+que incluya una representación gráfica.*
+
+
+```{r}
+
+```
 
 
 
