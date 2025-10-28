@@ -1,14 +1,89 @@
 ---
-title: 'PEC1: Estadística descriptiva '
-author: "marcusRB"
-date: "October, 2025"
-output: pdf_document
+title: 'PEC1: Estadística Descriptiva'
+author: "Marco Russo"
+date: "`r format(Sys.Date(), '%B, %Y')`"
+output:
+  pdf_document: 
+    toc: true
+    toc_depth: 4
+    number_sections: true
+    fig_width: 7
+    fig_height: 5
+    fig_caption: true
+    keep_tex: false
+    latex_engine: xelatex
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
 header-includes:
 - \usepackage{xcolor}
 - \usepackage{framed}
 - \usepackage{listings}
-
+- \usepackage{fancyhdr}
+- \usepackage{geometry}
+- \usepackage{caption}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{graphicx}
+- \geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+- \pagestyle{fancy}
+- \fancyhead[L]{PEC1 - Estadística Descriptiva}
+- \fancyhead[R]{Marco Russo}
+- \fancyfoot[C]{\thepage}
+- \renewcommand{\headrulewidth}{0.4pt}
+- \renewcommand{\footrulewidth}{0.4pt}
+params:
+  author: MarcusRB
+  email: mrussorb@uoc.edu
+  github: https://github.com/marcusRB/uoc-ub-scientific-programming
+  linkedin: https://www.linkedin.com/in/marcusrb/
 ---
+
+\newpage
+
+# Información del Estudiante
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Nombre} & Marco Russo \\
+\hline
+\textbf{Email} & mrussorb@uoc.edu \\
+\hline
+\textbf{GitHub} & https://github.com/marcusRB/uoc-ub-scientific-programming \\
+\hline
+\textbf{LinkedIn} & https://www.linkedin.com/in/marcusrb/ \\
+\hline
+\textbf{Fecha} & \today \\
+\hline
+\end{tabular}
+\end{center}
+
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,           # Mostrar código
+  warning = FALSE,       # No mostrar warnings
+  message = FALSE,       # No mostrar mensajes
+  fig.align = 'center',  # Centrar figuras
+  fig.width = 8,         # Ancho de figuras
+  fig.height = 5,        # Alto de figuras
+  out.width = '80%',     # Tamaño de salida
+  cache = FALSE,         # No cachear resultados
+  tidy = TRUE,           # Formatear código
+  tidy.opts = list(width.cutoff = 60)
+)
+```
 
 # Sección 1. Importación, exportación y gestión de datos (2 puntos)
 
@@ -16,7 +91,7 @@ header-includes:
 Se pide de descargar el dataset desde Kaggle disponible a la ruta indicada:
 
 ```{r}
-# Descargar el dataset
+# Descargamos el dataset
 # https://www.kaggle.com/datasets/amitvkulkarni/hair-health
 ```
 
@@ -165,37 +240,47 @@ general de estos atributos para hacer una primera aproximación a los
 datos:
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
-summary(HairFallH[c("Hair Loss","Genetics")])
 
-histList<- list()
+# Histograma de edad con densidad
+ggplot(HairFallH, aes(x = Age)) +
+  geom_histogram(aes(y = after_stat(density)), bins = 30, 
+                 fill = "skyblue", color = "black") +
+  geom_density(color = "red", size = 1.5) +
+  geom_vline(xintercept = mean(HairFallH$Age), 
+             color = "blue", linetype = "dashed", size = 1) +
+  labs(
+    title = "Distribución de Edad",
+    subtitle = paste("Media =", round(mean(HairFallH$Age), 1), "años"),
+    x = "Edad (años)",
+    y = "Densidad"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
-n = c("Hair Loss", "Genetics")
-HairFallAux = HairFallH %>% select(all_of(n))
-histList <- list()
-
-for(y in 1:ncol(HairFallAux)){
-  col <- names(HairFallAux)[y]
-  
-  # Use backticks for column names with spaces
-  ggp <- ggplot(HairFallAux, aes(x = .data[[col]])) +
-    geom_histogram(bins = 30, fill = "cornflowerblue", color = "black") + 
-    ggtitle(paste("Distribution of", col)) +  # More descriptive title
-    xlab(col) +
-    ylab("Count") +
-    theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-  
-  histList[[y]] <- ggp
-}
-
-# Display all plots in a grid
-if(length(histList) > 0) {
-  do.call(grid.arrange, c(histList, ncol = 2))
-}
+# Box plot: Edad por Hair Loss
+ggplot(HairFallH, aes(x = factor(`Hair Loss`, labels = c("Sin caída", "Con caída")), 
+                      y = Age, fill = factor(`Hair Loss`))) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = c("#2ecc71", "#e74c3c")) +
+  labs(
+    title = "Distribución de Edad según Caída de Cabello",
+    x = "Estado de Caída de Cabello",
+    y = "Edad (años)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "none"
+  )
 
 ```
+Mostramos la distrubicón mostrando la mediana, y la 
+distribución de frecuencia de edad. Del otro gráfico se muestra la distribución 
+de edad por caída y si caída. Vemos que está bien equilibrado, por lo que entendemos
+que la muestra está homogénea y no parecer haya sesgo.
 
 ***
+\newpage
 
 ## (1 punto) Ejercicio 2. Exploración del entorno RStudio y paquetes asociados.
 
@@ -275,6 +360,7 @@ list.files(WD)
 
 
 ***
+\newpage
 
 # Sección 2: Análisis básico del conjunto de datos (3,5 puntos)
 
@@ -291,13 +377,13 @@ Utilizaremos ggplot para poder mostrar los datos en barras verticales por cada
 una de las 3 categorías de la variable `Stress` indicando por colores rojos HIGH,
 verde LOW, azule MODERATE
 
-```{r}
+```{r echo=TRUE, warning=FALSE}
 # Mostramos los resultados de esta proporción
 stress_prop <- HairFallH %>%
-  group_by(`Nutritional Deficiencies`, Stress) %>%
-  summarise(count = n(), .groups = "drop") %>%
-  group_by(`Nutritional Deficiencies`) %>%
-  mutate(prop = count / sum(count))
+  dplyr::group_by(`Nutritional Deficiencies`, Stress) %>%
+  dplyr::summarise(count = n(), .groups = "drop") %>%
+  dplyr::group_by(`Nutritional Deficiencies`) %>%
+  dplyr::mutate(prop = count / sum(count))
 
 ggplot(stress_prop, aes(x = `Nutritional Deficiencies`, y = prop, fill = Stress)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -326,10 +412,10 @@ que hay entre estrés y la caída de cabello.
 
 ```{r}
 stress_hairloss <- HairFallH %>%
-  group_by(Stress, `Hair Loss` = `Hair Loss`) %>%
-  summarise(count = n(), .groups = "drop") %>%
-  group_by(Stress) %>%
-  mutate(prop = count / sum(count))
+  dplyr::group_by(Stress, `Hair Loss` = `Hair Loss`) %>%
+  dplyr::summarise(count = n(), .groups = "drop") %>%
+  dplyr::group_by(Stress) %>%
+  dplyr::mutate(prop = count / sum(count))
 
 ggplot(stress_hairloss, aes(x = Stress, y = prop, fill = factor(`Hair Loss`))) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -357,6 +443,11 @@ contando el número de personas por cada tipo de deficiencia nutricional.*
 
 
 ```{r}
+
+nutri_hairloss <- HairFallH %>% 
+  dplyr::filter(`Hair Loss` == 1) %>% 
+  dplyr::count(`Nutritional Deficiencies`, sort = TRUE)
+
 ggplot(nutri_hairloss, aes(x = reorder(`Nutritional Deficiencies`, n), y = n, fill = n)) +
   geom_bar(stat = "identity") +
   coord_flip() +
@@ -395,17 +486,17 @@ agrupamos por estrés YES, fumadoras YES y la edad es menor que 34.19
 
 ```{r}
 tabla <- HairFallH %>%
-  filter(`Hair Loss` == 1,
+  dplyr::filter(`Hair Loss` == 1,
          Smoking == "Yes",
          Age < mean_age) %>%
-  group_by(Stress) %>%
-  summarise(count = n(), .groups = "drop")
-```
+  dplyr::group_by(Stress) %>%
+  dplyr::summarise(count = n(), .groups = "drop")
 
-```{r}
+
 # La tabla mostraría este resultado.
 tabla
 ```
+
 
 Teniendo en cuenta la media de 34, aquellas personas que se encuentran por debajo
 del promedio, con un nivel de estrés alto tenemos 37 personas; nivel bajo 38 y
@@ -451,8 +542,8 @@ hormonales. Queremos ver si hay ciertas correlaciones según estos dos factores.
 
 ```{r}
 combo_hairloss <- HairFallH %>%
-  group_by(`Medical Conditions`, `Hormonal Changes`) %>%
-  summarise(Mean_Hair_Loss = mean(`Hair Loss`), .groups = "drop")
+  dplyr::group_by(`Medical Conditions`, `Hormonal Changes`) %>%
+  dplyr::summarise(Mean_Hair_Loss = mean(`Hair Loss`), .groups = "drop")
 
 ggplot(combo_hairloss, aes(x = `Hormonal Changes`, y = Mean_Hair_Loss, fill = `Hormonal Changes`)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -472,9 +563,9 @@ un cambio hormonal afecta a los síntomas de "Androgenetic Alopecia", "Dermatosi
 el caso y cada síntoma para poder ver su causa-efecto para poder dar una respuesta
 correcta a los gráficos actuales.
 
-
-
 ***
+
+\newpage
 
 # Sección 3: Estadística descriptiva y gráficos (4,5 puntos)
 
@@ -509,7 +600,7 @@ cat_summary <- HairFallH %>%
          `Medications & Treatments`, `Nutritional Deficiencies`, 
          Stress, `Poor Hair Care Habits`, `Environmental Factors`, 
          Smoking, `Weight Loss`) %>%
-  summarise(across(everything(), ~length(unique(.x))))
+  dplyr::summarise(across(everything(), ~length(unique(.x))))
 
 cat_summary
 ```
@@ -555,17 +646,17 @@ visualizar cuales son los factores más relevantes.*
 ```{r}
 # Se crea la tabla de frecuencias
 tabla_medical <- HairFallH %>%
-  group_by(`Medical Conditions`, `Hair Loss`) %>%
-  summarise(count = n(), .groups = "drop") %>%
+  dplyr::group_by(`Medical Conditions`, `Hair Loss`) %>%
+  dplyr::summarise(count = n(), .groups = "drop") %>%
   pivot_wider(names_from = `Hair Loss`, values_from = count, values_fill = 0)
 
 # Ordenamos por mayor número de "Sí" (Hair Loss = 1) para tener una mejor visualización
 tabla_medical <- tabla_medical %>%
-  arrange(desc(`1`))
+  dplyr::arrange(desc(`1`))
 
 # Convertimos a formato largo para el heatmap
 heat_data <- tabla_medical %>%
-  melt(id.vars = "Medical Conditions", variable.name = "Hair_Loss", value.name = "count")
+  reshape2::melt(id.vars = "Medical Conditions", variable.name = "Hair_Loss", value.name = "count")
 
 # Vamos a ordenar los factores para que aparezcan de mayor a menor
 heat_data$`Medical Conditions` <- factor(heat_data$`Medical Conditions`,
