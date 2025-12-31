@@ -1,0 +1,109 @@
+---
+title: 'PEC4: '
+author: "Marco Russo - Silvia Gamundi Sumando"
+date: "Enero, 2025"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+email: marcusrb@uoc.edu
+header-includes:
+- \usepackage{xcolor}
+- \usepackage{framed}
+- \usepackage{listings}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, 
+                      fig.width = 10, fig.height = 6)
+```
+
+
+# Sección 1. Contexto y objetivo del estudio. Datos (1 punto)
+
+
+
+***
+
+# Sección 2. Prospección y preparación de los datos (2 puntos)
+
+## 2.1 Descripción de los datos (1 punto)
+ver LAB1
+
+***
+
+## 2.2 Preguntas “objetivo” (1 punto)
+ver LAB3 y PEC1
+
+***
+
+# Sección 3. Análisis exploratorio de los datos (2,5 puntos)
+
+## 3.1 Análisis descriptivo y gráfico (1 punto)
+ver LAB2
+
+***
+
+## 3.2. Ejercicios de inferencia y simulación (1,5 puntos)
+ver LAB3, LAB4, PEC2
+
+***
+
+# Sección 4. Modelos de aprendizaje automático (2,5 puntos)
+ 
+ver LAB5 y PEC3
+
+
+
+***
+
+# Sección 5. Visualización (1,5 puntos)
+
+ver LAB6 y PEC3
+
+***
+# Sección 6. Conclusiones (0,5 puntos)
+
+
+
+***
+
+# Bibliografía
+
+
+References
+
+1. Wolberg,W.H., and Mangasarian,O.L. (1990). Multisurface method of pattern separation for medical diagnosis applied to breast cytology. In Proceedings of the National Academy of Sciences, 87, 9193-9196.
+- Size of data set: only 369 instances (at that point in time)
+- Collected classification results: 1 trial only
+- Two pairs of parallel hyperplanes were found to be consistent with 50% of the data
+- Accuracy on remaining 50% of dataset: 93.5%
+- Three pairs of parallel hyperplanes were found to be consistent with 67% of data
+- Accuracy on remaining 33% of dataset: 95.9%
+
+2. Zhang,J. (1992). Selecting typical instances in instance-based learning. In Proceedings of the Ninth International Machine Learning Conference (pp. 470-479). Aberdeen, Scotland: Morgan Kaufmann.
+- Size of data set: only 369 instances (at that point in time)
+- Applied 4 instance-based learning algorithms
+- Collected classification results averaged over 10 trials
+- Best accuracy result:
+- 1-nearest neighbor: 93.7%
+- trained on 200 instances, tested on the other 169
+- Also of interest:
+- Using only typical instances: 92.2% (storing only 23.1 instances)
+- trained on 200 instances, tested on the other 169
+
+Blake, C.L. & Merz, C.J. (1998). UCI Repository of Machine Learning Databases. Irvine, CA: University of California, Irvine, Department of Information and Computer Science. Formerly available from http://www.ics.uci.edu/~mlearn/MLRepository.html.
+
+
+* https://shiny.posit.co/py/templates/
+
+
+***
+
+
+
+
+
+
+
+
