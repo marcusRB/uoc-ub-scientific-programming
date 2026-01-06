@@ -1,17 +1,87 @@
 ---
-title: 'PEC4: '
+title: 'PEC4: Final assessment'
 author: "Marco Russo - Silvia Gamundi Sumando"
 date: "Enero, 2025"
 output:
-  pdf_document: default
+  pdf_document: 
+    toc: true
+    toc_depth: 4
+    number_sections: true
+    fig_width: 7
+    fig_height: 5
+    fig_caption: true
+    keep_tex: false
+    latex_engine: xelatex
   html_document:
+    toc: true
+    toc_float: true
     df_print: paged
-email: marcusrb@uoc.edu
 header-includes:
 - \usepackage{xcolor}
 - \usepackage{framed}
 - \usepackage{listings}
+- \usepackage{fancyhdr}
+- \usepackage{geometry}
+- \usepackage{caption}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{graphicx}
+- \geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+- \pagestyle{fancy}
+- \fancyfoot[C]{\thepage}
+- \renewcommand{\headrulewidth}{0.4pt}
+- \renewcommand{\footrulewidth}{0.4pt}
 ---
+
+\newpage
+
+# Información del Estudiante
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Nombre} & Marco Russo \\
+\hline
+\textbf{Email} & mrussorb@uoc.edu \\
+\hline
+\textbf{GitHub} & https://github.com/marcusRB/uoc-ub-scientific-programming \\
+\hline
+\textbf{LinkedIn} & https://www.linkedin.com/in/marcusrb/ \\
+\hline
+\textbf{Fecha} & \today \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Nombre} & Silvia Gamundi Sumando \\
+\hline
+\textbf{Email} & sgamundis@uoc.edu
+ \\
+\hline
+\textbf{GitHub} & https://github.com/ \\
+\hline
+\textbf{LinkedIn} & https://www.linkedin.com/in/ \\
+\hline
+\textbf{Fecha} & \today \\
+\hline
+\end{tabular}
+\end{center}
+
+
+\newpage
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, 
@@ -46,7 +116,120 @@ Tenemos un pequeño diccionario disponible del significado de cada característi
 # Sección 2. Prospección y preparación de los datos (2 puntos)
 
 ## 2.1 Descripción de los datos (1 punto)
-ver LAB1
+
+
+Preparamos el entorno cargando el resto de librerías que serán útiles para realizar
+un análisis exploratorio de los datos.
+
+```{r include=FALSE}
+# Observamos las librerías disponibles y descargaremos el resto
+library()
+if(!require('corrplot')) install.packages('corrplot'); library('corrplot')
+if(!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
+if(!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
+if(!require('Rmisc')) install.packages('Rmisc'); library('Rmisc')
+if(!require('dplyr')) install.packages('dplyr'); library('dplyr')
+if(!require('xfun')) install.packages('xfun'); library('xfun')
+if(!require('psych')) install.packages('psych'); library('psych')
+if(!require('visdat')) install.packages('visdat'); library('visdat')
+```
+
+Descargamos el dataset en un formato dataframe y comprobaremos
+
+```{r}
+# Create directory if it doesn't exist
+if (!dir.exists("data")) {
+  dir.create("data", recursive = TRUE)
+}
+
+# Define the URL and file path
+url <- "https://zenodo.org/records/7554815/files/Bacteremia_public_S2.csv?download=1"
+filename <- "data/bacteremia_dataset.csv"
+
+# Download the file
+download.file(url, destfile = filename, mode = "wb")  # "wb" for binary mode on Windows
+
+# Read the CSV file
+bacteremia_df <- read.csv(file = filename)
+
+# Preview the data
+dplyr::glimpse(bacteremia_df)
+```
+
+
+```{r}
+# Comprobamos si es un dataframe
+is.data.frame(bacteremia_df)
+```
+
+Finalmente mostramos los primeros datos y la naturaleza de las características.
+
+```{r}
+# Mostramos los primeros datos con head()
+head(bacteremia_df, 10)
+```
+
+
+
+```{r}
+# Mostramos los últimos datos también con tail()
+tail(bacteremia_df, 10)
+```
+
+Realizaremos un exploratorio genérico del dataset. Mostrando información básica del dataset, para pasar luego a los estadísticos básico y comenzaremos a interactuar con las características luego.
+
+Verificamos la estructura del juego de datos principal. Vemos el número de columnas que tenemos y ejemplos de los contenidos de las filas.
+
+```{r}
+str(bacteremia_df)
+```
+
+```{r}
+# Observamos su composición
+dim(bacteremia_df)
+```
+
+Vemos que tenemos **53** características o variables y **14691** registros.
+
+
+```{r}
+# Obtenemos el datatype de cada característica
+sapply(bacteremia_df, class)
+```
+
+De las características observamos que existen 3 variables del tipo "integer",
+del
+tipo double, y el resto, 10 variables del tipo objeto o character.
+
+A simple vista las que podrían ser variables categoróricas, en realidad son 
+características binarias (TRUE o FALSE), como podríamos interpolar por 1,0 si 
+deseamos.
+
+Podemos revisar la descripción de las variables contenidas en el fichero y si
+los tipos de variables se corresponden con las que hemos cargado. Las
+organizamos lógicamente para darles sentido y construimos un pequeño
+diccionario de datos utilizando la documentación auxiliar.
+
+
+Respecto al significado de cada una de las features utilizaremos el fichero 
+DataDictionary - https://zenodo.org/records/7554815/files/bacteremia-DataDictionary.csv
+disponible en la misma página oficial para interpretar los valores.
+
+```{r}
+# Read directly from URL
+dictionary_df <- read.csv("https://zenodo.org/records/7554815/files/bacteremia-DataDictionary.csv?download=1")
+
+# Display as a nice formatted table
+library(DT)
+datatable(dictionary_df, 
+          options = list(pageLength = 20, 
+                         scrollX = TRUE,
+                         searchHighlight = TRUE),
+          rownames = FALSE)
+```
+
+
+
 
 ***
 
