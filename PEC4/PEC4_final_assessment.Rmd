@@ -10,7 +10,6 @@ output:
     fig_width: 7
     fig_height: 5
     fig_caption: true
-    keep_tex: false
     latex_engine: xelatex
     highlight: tango
     citation_package: natbib
@@ -83,7 +82,7 @@ Información del Estudiante
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, 
-                      fig.width = 10, fig.height = 6)
+                      fig.width = 8, fig.height = 5 )
 ```
 
 # 1. Contexto y objetivo del estudio. Datos (1 punto)
@@ -161,11 +160,11 @@ para realizar un análisis exploratorio de los datos.
 if(!require('corrplot')) install.packages('corrplot'); library('corrplot')
 if(!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
 if(!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
-if(!require('Rmisc')) install.packages('Rmisc'); library('Rmisc')
 if(!require('dplyr')) install.packages('dplyr'); library('dplyr')
-if(!require('xfun')) install.packages('xfun'); library('xfun')
-if(!require('psych')) install.packages('psych'); library('psych')
-if(!require('visdat')) install.packages('visdat'); library('visdat')
+if(!require('naniar')) install.packages('naniar'); library('naniar')
+if (!require("mice")) install.packages("mice")
+
+
 ```
 
 Descargamos el dataset en un formato dataframe y comprobaremos su
@@ -234,7 +233,11 @@ realizar un exploratorio básico para ver inconsistencias.
 sapply(bacteremia_df, class)
 ```
 
+Respecto a las características, no tenemos transformaciones previas a realizar,
+exceptuando nuevas features que podríamos crear sucesivamente.
 
+Procederemos con un exploratorio básico extrayendo la información estadístico
+de las características del dataset.
 
 ```{r}
 # Install and load necessary packages
@@ -247,13 +250,17 @@ library(DataExplorer)
 dfSummary(bacteremia_df)
 ```
 
-De las características observamos que existen 3 variables del tipo
-"integer", del tipo double, y el resto, 10 variables del tipo objeto o
-character.
+De las 53 características observamos que existen:
 
-A simple vista las que podrían ser variables categoróricas, en realidad
-son características binarias (TRUE o FALSE), como podríamos interpolar
-por 1,0 si deseamos.
+- 2 variables del tipo numérica discretas (SEX, BloodCulture), aunque podríamos
+tratar esta última como variable dependiente.
+- 50 variables son del tipo numérica continua a excpeción de la característica 
+id del paciente `ID`, que no es considerada para la modelización, peró en caso
+de realizar segmentación, podría ser útil.
+
+Hay que tener en cuenta que la variable `AGE` ha sido modificada ligermente por
+lo que los estudios analíticos a continuación, no serán del todo precisas y 
+fiables. Por lo que propondríamos suposiciones a lo largo del estudio.
 
 Podemos revisar la descripción de las variables contenidas en el fichero
 y si los tipos de variables se corresponden con las que hemos cargado.
@@ -265,18 +272,21 @@ fichero DataDictionary -
 <https://zenodo.org/records/7554815/files/bacteremia-DataDictionary.csv>
 disponible en la misma página oficial para interpretar los valores.
 
-```{r}
+```{r }
 # Read directly from URL
 dictionary_df <- read.csv("https://zenodo.org/records/7554815/files/bacteremia-DataDictionary.csv?download=1")
 
-# # Display as a nice formatted table
-# library(DT)
-# datatable(dictionary_df, 
-#           options = list(pageLength = 20, 
-#                          scrollX = TRUE,
-#                          searchHighlight = TRUE),
-#           rownames = FALSE)
+# Display as a nice formatted table
+library(DT)
+datatable(dictionary_df,
+          options = list(pageLength = 20,
+                         scrollX = TRUE,
+                         searchHighlight = TRUE),
+          rownames = FALSE)
 ```
+
+A continuación comprobaremos los valores nulos que podrían estar en nuestro dataset.
+
 
 ```{r}
 # Verificación de valores perdidos
@@ -284,8 +294,49 @@ na_count <- sapply(bacteremia_df, function(x) sum(is.na(x)))
 print(na_count[na_count > 0])
 ```
 
+De las 14691 observaciones, disponemos de muchos valores nulos, podemos realizar un análisis para comprobar el porcentaje que podría este afectar a la estabilidad de los análisis.
+
+```{r}
+
+# Visualize missing values by variable
+gg_miss_var(bacteremia_df, show_pct = TRUE) +
+  labs(title = "variables faltantes en Bacteremia",
+       x = "Variables",
+       y = "Ratio de los valores nulos")
+```
+
+```{r}
+missing_summary <- data.frame(
+  Variable = names(bacteremia_df),
+  Missing_Count = colSums(is.na(bacteremia_df)),
+  Missing_Percent = round(colSums(is.na(bacteremia_df))/nrow(bacteremia_df)*100, 2)
+) %>%
+  arrange(desc(Missing_Percent))
+
+print("Missing Data Summary:")
+print(missing_summary)
+```
+
+Notamos que no existe características que superen al umbral del 70% de los valores nulos, lo que podríamos
+considerar a eliminar la característica de nuestros análisis.
+
+Sin embargo, hay valores que necesitaríamos analizar a posteriori por tener unos valores 
+faltantes entre el 10% y 40% que supone tener que tomar decisiones.
+
+```{r}
+filter(missing_summary, missing_summary$Missing_Percent > 20)
+```
 
 
+```{r}
+filter(missing_summary, missing_summary$Missing_Percent > 0 & missing_summary$Missing_Percent < 20)
+```
+
+Tenemos 7 características superior al 20% de valores nulos y 42 de muy residual, debajo del 1% hasta el 20%.
+
+Podemos realizar un análisis exhaustivo para poder tomar decisiones al respecto, cuáles tareas de imputaciones de los valores
+faltantes por segmentación de valores cercanos (por ejemplo algún valor estadístico tipo media, mediana) o a través de técnicas
+de aprendizaje automático (utilizar segmentación a través de k-Means u otros métodos supervisado tipo kNN).
 
 
 ------------------------------------------------------------------------
@@ -313,35 +364,54 @@ sprintf("La proporción de la variable dependiente es: %.2f
 
 ```
 
-```{r eval=FALSE, include=FALSE}
-library(skimr)
-library(dplyr)
+Vemos que la diferencia del ratio de la posible variable dependiente está bastante desbalanceada a favor de los casos de valores negativos que positivos, 92-8.
 
-# Comprehensive skim
-skim(bacteremia_df)
 
-# Interactive view
-skimr::skim_tee(bacteremia_df)
+## 3.2 Limpieza de los datos
+
+### El algoritmo MICE
+
+La imputación múltiple mediante ecuaciones encadenadas es un método robusto e informativo para gestionar la falta de datos en conjuntos de datos. Este procedimiento rellena (imputa) los datos faltantes en un conjunto de datos mediante una serie iterativa de modelos predictivos. En cada iteración, cada variable especificada en el conjunto de datos se imputa utilizando las demás variables. Estas iteraciones deben ejecutarse hasta que se observe que se ha alcanzado la convergencia.
+
+**Fuga de datos**:
+
+MICE es especialmente útil si los valores faltantes están asociados con la variable objetivo de una forma que introduce fugas. Por ejemplo, supongamos que se desea modelar la retención de clientes en el momento del registro. Una variable se recopila en el momento del registro o un mes después. La ausencia de esa variable constituye una fuga de datos, ya que indica que el cliente no se retuvo durante un mes.
+
+**Análisis del embudo**:
+
+La información suele recopilarse en diferentes etapas de un embudo. MICE puede utilizarse para realizar estimaciones fundamentadas sobre las características de las entidades en diferentes puntos de un embudo.
+
+**Intervalos de confianza**:
+
+MICE puede utilizarse para imputar valores faltantes; sin embargo, es importante tener en cuenta que estos valores imputados constituyen una predicción. Crear múltiples conjuntos de datos con diferentes valores imputados permite realizar dos tipos de inferencia:
+
+* Distribución de valores imputados: Se puede crear un perfil para cada valor imputado, lo que permite realizar afirmaciones sobre la distribución probable de dicho valor.
+
+* Distribución de predicción del modelo: Con múltiples conjuntos de datos, se pueden crear múltiples modelos y una distribución de predicciones para cada muestra. Las muestras con valores imputados que no pudieron imputarse con mucha confianza presentarían una mayor varianza en sus predicciones.
+
+
+Hacemos una copia del dataset y probamos solamente dos métodos.
+
+```{r}
+bak_bacteremia_df <- bacteremia_df
 ```
 
-```{r eval=FALSE, include=FALSE}
-library(DataExplorer)
+El primer método es performar con MICE, tal como explicado, sin embargo este método podría tardar muchas horas en ejecutarse.
 
-# # Quick overview
-# introduce(bacteremia_df)
+```{r}
+# Multiple imputation using MICE
+# cat("\nPerforming Multiple Imputation...\n")
+# imputed_data <- mice(bacteremia_df, 
+#                      m = 5, 
+#                      maxit = 50, 
+#                      method = 'pmm', 
+#                      seed = 42)
 # 
-# # Generate a complete profiling report
-# create_report(bacteremia_df,
-#               output_file = "data_profile_report.html",
-#               output_format = "html_document",
-#               y = "BloodCulture")  # Specify target variable if needed
-
-# Or create individual plots
-plot_intro(bacteremia_df)
-plot_missing(bacteremia_df)
-plot_histogram(bacteremia_df)
-plot_bar(bacteremia_df)
-plot_correlation(bacteremia_df, type = "continuous")
+# # Extract first imputed dataset
+# bacteremia_mice_imputed <- complete(imputed_data, 1)
+# 
+# # Check imputation quality
+# cat("\nMissing values after imputation:", sum(is.na(bacteremia_mice_imputed)), "\n")
 ```
 
 
