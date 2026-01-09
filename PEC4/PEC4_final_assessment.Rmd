@@ -142,9 +142,9 @@ infectados. Ejemplos incluyen endocarditis, osteomielitis, y meningitis.
 El tratamiento es fundamental para erradicar a las bacterias y requiere
 el uso de antibióticos por vía intravenosa.
 
-Tenemos un pequeño diccionario disponible del significado de cada
-característica del dataset, lo descargaremos y visualizaremos para
-entender mejor el contexto.
+Se dispone de un pequeño diccionario que incluye el significado de cada
+característica del dataset. Lo descargaremos y visualizaremos para
+entender mejor el contexto de cada característica del dataset.
 
 ------------------------------------------------------------------------
 
@@ -162,9 +162,6 @@ if(!require('tidyverse')) install.packages('tidyverse'); library('tidyverse')
 if(!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
 if(!require('dplyr')) install.packages('dplyr'); library('dplyr')
 if(!require('naniar')) install.packages('naniar'); library('naniar')
-if (!require("mice")) install.packages("mice")
-
-
 ```
 
 Descargamos el dataset en un formato dataframe y comprobaremos su
@@ -305,6 +302,9 @@ gg_miss_var(bacteremia_df, show_pct = TRUE) +
        y = "Ratio de los valores nulos")
 ```
 
+Calcularemos los valores totales y su ratio.
+
+
 ```{r}
 missing_summary <- data.frame(
   Variable = names(bacteremia_df),
@@ -332,22 +332,134 @@ filter(missing_summary, missing_summary$Missing_Percent > 20)
 filter(missing_summary, missing_summary$Missing_Percent > 0 & missing_summary$Missing_Percent < 20)
 ```
 
-Tenemos 7 características superior al 20% de valores nulos y 42 de muy residual, debajo del 1% hasta el 20%.
+Tenemos 7 características superior al 20% de valores nulos y 42 de muy residual, debajo del 1% hasta el 20%. Podemos realizar un análisis exhaustivo para poder tomar decisiones al respecto, cuáles tareas de imputaciones de los valores faltantes por segmentación de valores cercanos (por ejemplo algún valor estadístico tipo media, mediana) o a través de técnicas de aprendizaje automático (utilizar segmentación a través de k-Means u otros métodos supervisado tipo kNN).
 
-Podemos realizar un análisis exhaustivo para poder tomar decisiones al respecto, cuáles tareas de imputaciones de los valores
-faltantes por segmentación de valores cercanos (por ejemplo algún valor estadístico tipo media, mediana) o a través de técnicas
-de aprendizaje automático (utilizar segmentación a través de k-Means u otros métodos supervisado tipo kNN).
-
-
-------------------------------------------------------------------------
+***
 
 ## 2.2 Preguntas “objetivo” (1 punto)
 
+Antes de comenzar con las preguntas objetivos, obtenemos una clasificación de los valores indicadores para el hemocultivo. De esta manera agruparemos los valores de las features por categoría:
+
+* A. Marcadores de inflamación e infección
+Estos aumentan en casos de infecciones, sepsis y bacteriemia.
+
+| Variable | Meaning                    |
+| -------- | -------------------------- |
+| CRP      | C-reactive protein         |
+| HS       | Hypersensitive CRP         |
+| NT       | Neutrophils                |
+| WBC      | White blood cells          |
+| LDH      | Cell damage / inflammation |
+
+Estas variables deben tener una correlación fuerte con nuestra variable target.
+
+* B. Coagulación y hemostasia
+La infección puede provocar una disfunción de la coagulación.
+
+| Variable | Meaning          |
+| -------- | ---------------- |
+| FIB      | Fibrinogen       |
+| APTT     | Coagulation time |
+| PLT      | Platelets        |
+
+Debería tener una correlación indirecta. Está relacionada con sepsis.
+
+* C. Perfil metabólico y lipídico
+A menudo se altera durante enfermedades sistémicas.
+
+| Variable | Meaning       |
+| -------- | ------------- |
+| GLU      | Glucose       |
+| TRIG     | Triglycerides |
+| CHOL     | Cholesterol   |
+
+Deberían tener una relación indirecta, está correlacionada con el estrés metabólico.
+
+* D. Función hepática y proteínas
+El hígado reacciona a la inflamación y a las infecciones.
+
+| Variable | Meaning        |
+| -------- | -------------- |
+| ALB      | Albumin        |
+| TP       | Total proteins |
+| CHE      | Cholinesterase |
+
+Hay una relación indirecta con la variable target
+
+* E. Daño tisular/muscular
+Lesión celular o estrés sistémico.
+
+| Variable | Meaning         |
+| -------- | --------------- |
+| CK       | Creatine kinase |
+| LDH      | Cell damage     |
 
 
-ver LAB3 y PEC1
+* F. Enzimas pancreáticas (contextual)
+Se miden solo ante sospecha de pancreatitis.
 
-------------------------------------------------------------------------
+| Variable | Meaning            |
+| -------- | ------------------ |
+| AMY      | Amylase            |
+| PAMY     | Pancreatic amylase |
+| LIP      | Lipase             |
+
+Deberían tener una relación débil, también justifica muchos valores nulos.
+
+
+* G. Electrolitos y minerales
+Se alteran en casos de enfermedad grave.
+
+| Variable | Meaning   |
+| -------- | --------- |
+| POTASS   | Potassium |
+| MG       | Magnesium |
+
+Desde esta referencia, se recogen muchos del significado de los valores, y de los rangos de interés para poder contestar a unas preguntas que realizamos a continuación.
+
+**IMPORTANTE** Los rangos de referencia típicos que mostramos a continuación son para interpretar los datos no para diagnóstico.
+
+| Variable | Typical Range  |
+| -------- | -------------- |
+| CRP      | < 5 mg/L       |
+| HS       | < 1 mg/L       |
+| WBC      | 4–10 ×10⁹/L    |
+| NT       | 40–75 %        |
+| GLU      | 70–100 mg/dL   |
+| CHOL     | < 200 mg/dL    |
+| TRIG     | < 150 mg/dL    |
+| ALB      | 3.5–5.0 g/dL   |
+| LDH      | 140–280 U/L    |
+| CK       | 30–200 U/L     |
+| FIB      | 200–400 mg/dL  |
+| APTT     | 25–35 s        |
+| POTASS   | 3.5–5.1 mmol/L |
+| AMY      | 30–110 U/L     |
+| LIP      | < 160 U/L      |
+
+
+
+
+### ¿Existen diferencias descriptivas en los marcadores inflamatorios entre pacientes con y sin bacteriemia?
+
+Podemos contestar a esta pregunta comparando la tendencia y dispersión de variables según el estado del hemocultivo. 
+
+
+### ¿Cómo es la distribución de las variables metabólicas y qué asimetría presentan?
+
+Podemos describir la forma de distribución de cada feature y detectar asimetría y valores extremos (outliers).
+
+### ¿Cuál es la relación descriptiva entre variables fisiológicas y existen agrupaciones naturales?
+
+Aquí podemos explorar asociaciones entre variables y detectar patrones comunes.
+
+
+### ¿Existen diferencias descriptivas en la proporción de bacteriemia según categorías clínicas simples?
+
+Podemos describir frecuencias y proporciones.
+
+
+***
 
 # 3. Análisis exploratorio de los datos (2,5 puntos)
 
@@ -415,6 +527,10 @@ El primer método es performar con MICE, tal como explicado, sin embargo este m�
 ```
 
 
+Understanding Scatterplots and Bivariate Analysis
+
+
+
 ```{r}
 
 ```
@@ -438,13 +554,23 @@ ver LAB5 y PEC3
 
 # 5. Visualización (1,5 puntos)
 
+Aplicación Shiny con alguna solución aportada / análisis
+
 ver LAB6 y PEC3
 
 ------------------------------------------------------------------------
 
 # 6. Conclusiones (0,5 puntos)
 
-------------------------------------------------------------------------
+Valoraciones finales...
+
+* ¿Disponemos de conclusiones finales?
+* ¿Sería necesario realizar un análisis más avanzado?
+* ¿Faltan datos para obtener otro tipo de información como…?
+* ¿Se puede utilizar alguna de las conclusiones para tomar algún tipo de decisiones?
+
+
+***
 
 # Bibliografía
 
